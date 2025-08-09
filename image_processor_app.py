@@ -7,7 +7,7 @@ import io
 import inspect
 import re
 
-# --- 定数設定、AIモデルロード、画像処理関数群、FUNCTION_MAP、LLM連携関数 ---
+# --- 定数設定，LLM ロード，画像処理関数群，FUNCTION_MAP，LLM 連携関数 ---
 # --- 定数設定 ---
 MODEL_PATH = "./Llama-3-ELYZA-JP-8B-Q4_K_M.gguf"
 WINDOW_PRESETS = {
@@ -83,16 +83,16 @@ PROCESSING_KNOWLEDGE = {
     "fourier_transform": { "title": "フーリエ変換スペクトル", "keywords": ["フーリエ", "周波数", "スペクトル", "fft"] }
 }
 
-# --- AIモデルのロード ---
+# --- LLM のロード ---
 @st.cache_resource
 def load_model():
     try:
-        st.info("AIモデルをロード中です。初回起動時は時間がかかります...")
+        st.info("LLM をロード中です．初回起動時は時間がかかります...")
         llm = Llama(model_path=MODEL_PATH, n_gpu_layers=-1, n_ctx=4096, verbose=False, chat_format="llama-3")
-        st.success("AIモデルのロードが完了しました。")
+        st.success("LLM のロードが完了しました．")
         return llm
     except Exception as e:
-        st.error(f"モデルのロードに失敗しました: {e}。モデルファイル '{MODEL_PATH}' が正しい場所にありますか？")
+        st.error(f"モデルのロードに失敗しました: {e}．モデルファイル '{MODEL_PATH}' が正しい場所にありますか？")
         return None
 llm = load_model()
 
@@ -200,22 +200,22 @@ FUNCTION_MAP = {k: {"func": globals()[f"process_{k}"], **v} for k, v in PROCESSI
 
 def get_tasks_from_llm(user_instruction):
     if llm is None:
-        st.warning("AIモデルがロードされていません。キーワード検索で代用します。");
+        st.warning("LLM がロードされていません．キーワード検索で代用します．");
         tasks = [name for name, info in FUNCTION_MAP.items() if any(keyword in user_instruction for keyword in info['keywords'])];
-        # キーワード検索でも重複する可能性があるため、順序を保持しつつ重複を削除
+        # キーワード検索でも重複する可能性があるため，順序を保持しつつ重複を削除
         return list(dict.fromkeys(tasks)) if tasks else []
 
     task_list = "\n".join([f"- `{name}`: {info['title']}" for name, info in FUNCTION_MAP.items()])
     
     # 改善されたシステムプロンプト
-    system_prompt = f"""あなたはユーザーの指示を分析し、実行すべき処理を順番に特定する専門家です。以下のルールに従って、タスクリストから適切なタスク名を1つ以上選び、カンマ区切りのリストとして返答してください。
+    system_prompt = f"""あなたはユーザーの指示を分析し，実行すべき処理を順番に特定する専門家です．以下のルールに従って，タスクリストから適切なタスク名を1つ以上選び，カンマ区切りのリストとして返答してください．
 
 ### ルール ###
-1. ユーザーの指示に最も合致するタスクを、必要最小限の数だけ選んでください。
-2. 似たような目的のタスクが複数ある場合、より基本的で一般的なタスクを選択してください。
-   - 例えば、「平滑化」「ノイズ除去」という一般的な指示には、まず`noise_removal`を選択します。
-   - 「エッジを保持しながら平滑化」「バイラテラルフィルタ」のように、ユーザーが明確に高度な処理を指定した場合にのみ、`bilateral_filter`を選択してください。
-3. ユーザーが意図していない余計な処理は絶対に追加しないでください。
+1. ユーザーの指示に最も合致するタスクを，必要最小限の数だけ選んでください．
+2. 似たような目的のタスクが複数ある場合，より基本的で一般的なタスクを選択してください．
+   - 例えば，「平滑化」「ノイズ除去」という一般的な指示には，まず`noise_removal`を選択します．
+   - 「エッジを保持しながら平滑化」「バイラテラルフィルタ」のように，ユーザーが明確に高度な処理を指定した場合にのみ，`bilateral_filter`を選択してください．
+3. ユーザーが意図していない余計な処理は絶対に追加しないでください．
 
 ### タスクリスト ###
 {task_list}
@@ -223,8 +223,8 @@ def get_tasks_from_llm(user_instruction):
 ### 指示と回答の例 ###
 - 指示: 「ノイズを消して」 -> 回答: `noise_removal`
 - 指示: 「平滑化してエッジ検出」 -> 回答: `noise_removal,canny_edge`
-- 指示: 「輪郭をはっきりさせてから、エッジを検出して」 -> 回答: `edge_enhancement,canny_edge`
-- 指示: 「拡大して、滑らかにしてほしい」 -> 回答: `zoom_in,noise_removal`
+- 指示: 「輪郭をはっきりさせてから，エッジを検出して」 -> 回答: `edge_enhancement,canny_edge`
+- 指示: 「拡大して，滑らかにしてほしい」 -> 回答: `zoom_in,noise_removal`
 - 指示: 「エッジは残して滑らかに」 -> 回答: `bilateral_filter`
 - 指示: 「画像を平滑化して」 -> 回答: `noise_removal`
 - 指示: 「収縮して」 -> 回答: `morphological`
@@ -237,10 +237,10 @@ def get_tasks_from_llm(user_instruction):
         all_task_names = list(FUNCTION_MAP.keys())
         pattern = r'\b(' + '|'.join(all_task_names) + r')\b'
         found_tasks = re.findall(pattern, content)
-        # LLMが誤って重複したタスクを返す可能性に備え、ここで重複を削除する
+        # LLM が誤って重複したタスクを返す可能性に備え，ここで重複を削除する
         return list(dict.fromkeys(found_tasks)) if found_tasks else []
     except Exception as e:
-        st.error(f"AIの応答処理中に予期せぬエラーが発生しました: {e}"); return []
+        st.error(f"AI の応答処理中に予期せぬエラーが発生しました: {e}"); return []
 
 
 def convert_to_16bit_gray(pixel_array):
@@ -296,12 +296,12 @@ def handle_instruction_submit():
     if not instruction:
         st.session_state.last_tasks = []
         reset_all_params_to_default()
-        st.toast("画像処理をリセットしました。")
+        st.toast("画像処理をリセットしました．")
     else:
         st.toast("AIがタスクを解析中...")
         task_names = get_tasks_from_llm(instruction)
         
-        # get_tasks_from_llm内で重複削除は行われているが、念のためここでもチェック
+        # get_tasks_from_llm内で重複削除は行われているが，念のためここでもチェック
         if task_names:
             task_names = list(dict.fromkeys(task_names))
 
@@ -405,9 +405,9 @@ with st.sidebar:
                         session_key = f"p_{task}_{param_name}"
                         if config.get("type") == "selectbox": st.selectbox(config["label"], config["options"], key=session_key)
                         else: st.slider(config["label"], config["min"], config["max"], step=config.get("step", 0.1 if isinstance(config["min"], float) else 1), key=session_key)
-                else: st.info("調整可能なパラメータはありません。")
+                else: st.info("調整可能なパラメータはありません．")
         st.button("全てのパラメータを初期値に戻す", on_click=reset_all_params_to_default, use_container_width=True)
-    else: st.info("処理を選択すると、調整項目が表示されます。")
+    else: st.info("処理を選択すると，調整項目が表示されます．")
 
 # --- メインエリアのUIと処理ロジック ---
 if original_16bit_gray is not None:
@@ -426,14 +426,14 @@ if original_16bit_gray is not None:
     )
     
     if st.session_state.get("show_task_not_found_error", False):
-        st.error("指示内容に対応する処理が見つかりませんでした。")
+        st.error("指示内容に対応する処理が見つかりませんでした．")
         st.session_state.show_task_not_found_error = False
     
     if 'debug_llm_response' in st.session_state and st.session_state.debug_llm_response:
         with st.expander("デバッグ情報: AIからの生の応答"):
             st.text(st.session_state.debug_llm_response)
 
-    if llm is None: st.warning("AIモデルがロードされていないため、指示による画像処理は無効です。")
+    if llm is None: st.warning("LLM がロードされていないため，指示による画像処理は無効です．")
 
     tasks_to_run = st.session_state.get("last_tasks", [])
     display_original_image = original_16bit_gray
@@ -463,7 +463,7 @@ if original_16bit_gray is not None:
     col1, col2 = st.columns(2)
     ww, wl = st.session_state.p_ww, st.session_state.p_wl
     
-    # st.headerの代わりにst.markdownを使い、CSSでスタイルを調整
+    # st.headerの代わりにst.markdownを使い，CSSでスタイルを調整
     header_style = "font-weight: 600; font-size: 1.7rem; margin-bottom: 1rem;"
 
     with col1:
@@ -473,11 +473,11 @@ if original_16bit_gray is not None:
     
     with col2:
         # 右側のヘッダーに改行防止と省略(...)のスタイルを追加
-        # title属性に全文を入れることで、マウスオーバーで全文を確認できる
+        # title属性に全文を入れることで，マウスオーバーで全文を確認できる
         st.markdown(
             f'<p style="{header_style} white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{header_text}">{header_text}</p>',
             unsafe_allow_html=True
         )
         st.image(apply_ww_wl_and_convert_to_bgr(processed_image, ww, wl, enhance=enhance_default), use_container_width=True)
 else:
-    if not uploaded_file: st.info("DICOMファイルをアップロードして、画像処理を開始してください。")
+    if not uploaded_file: st.info("DICOM ファイルをアップロードして，画像処理を開始してください．")
